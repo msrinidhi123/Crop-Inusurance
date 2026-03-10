@@ -90,31 +90,7 @@ if (coverage > calculatedMaxCoverage) {
   );
   return;
 }
-      if (!window.ethereum) {
-        alert("MetaMask not installed!");
-        return;
-      }
 
-      setIsProcessing(true);
-
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-
-      const conversionRate = 100000;
-      const ethAmount = premium / conversionRate;
-      const weiValue = BigInt(Math.floor(ethAmount * 1e18)).toString(16);
-
-      const txHash = await window.ethereum.request({
-        method: "eth_sendTransaction",
-        params: [
-          {
-            from: accounts[0],
-            to: "0x646b9168A2f32DC48efb15FF80e91bCc2Fa5f4fD",
-            value: "0x" + weiValue,
-          },
-        ],
-      });
 
       const formData = new FormData();
       formData.append("userId", user._id);
@@ -128,7 +104,7 @@ if (coverage > calculatedMaxCoverage) {
       formData.append("village", village);
       formData.append("district", district);
       formData.append("state", stateName);
-      formData.append("txHash", txHash);
+      formData.append("txHash","");
       formData.append("landDocument", landDocument);
 
       const response = await fetch("http://localhost:5000/api/policies", {
@@ -138,17 +114,19 @@ if (coverage > calculatedMaxCoverage) {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || "Policy creation failed");
-      }
+     if (!response.ok) {
+  alert(data.message || "Policy creation failed");
+  return;
+}
 
       alert("✅ Policy Submitted for Admin Approval!");
       router.push("/user/dashboard");
 
-    } catch (error) {
-      console.error(error);
-      alert("❌ Something went wrong");
-    } finally {
+    } 
+    catch (error:any) {
+  console.error(error);
+  alert(error.message || "❌ Something went wrong");
+} finally {
       setIsProcessing(false);
     }
   };

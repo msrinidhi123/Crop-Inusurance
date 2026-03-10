@@ -48,7 +48,46 @@ export default function Policies() {
   }, [search, statusFilter, policies]);
 
   if (!user) return null;
+const payPremium = async (policy:any) => {
+  try {
 
+    if (!window.ethereum) {
+      alert("MetaMask not installed");
+      return;
+    }
+
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
+
+    const conversionRate = 100000;
+    const ethAmount = policy.premiumAmount / conversionRate;
+    const weiValue = BigInt(Math.floor(ethAmount * 1e18)).toString(16);
+
+    const txHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [
+        {
+          from: accounts[0],
+          to: "0x646b9168A2f32DC48efb15FF80e91bCc2Fa5f4fD",
+          value: "0x" + weiValue,
+        },
+      ],
+    });
+
+    await fetch(`http://localhost:5000/api/policies/pay-premium/${policy._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ txHash }),
+    });
+alert("✅ Premium Payment Successful! Policy Activated.");
+window.location.href = "/user/policies";
+
+  } catch (error) {
+    console.error(error);
+    alert("Payment failed");
+  }
+};
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat px-6 py-7"
@@ -166,6 +205,7 @@ export default function Policies() {
                   <th className="px-6 font-bold">Premium</th>
                   <th className="px-6 font-bold">Duration</th>
                   <th className="px-6 font-bold">Status</th>
+                  <th className="px-6 font-bold">Payment</th>
                 </tr>
               </thead>
 
@@ -216,6 +256,20 @@ export default function Policies() {
     : policy.status}
 </span>
                     </td>
+                    <td className="px-6">
+{policy.status === "Active" && !policy.txHash ? (
+  <button
+    onClick={() => payPremium(policy)}
+    className="bg-green-600 text-white px-4 py-1 rounded-lg"
+  >
+    Pay Premium
+  </button>
+) : policy.txHash ? (
+  <span className="text-green-700 font-semibold">Paid</span>
+) : (
+  <span className="text-gray-500">Waiting Approval</span>
+)}
+</td>
                   </tr>
                 ))}
               </tbody>
